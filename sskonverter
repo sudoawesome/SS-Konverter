@@ -1,0 +1,90 @@
+#!/bin/bash --
+
+#
+#	Script Name: SS Konverter
+#	Description: Skripta za konvertovanje slika u webp format
+#	Author: Sajber Sove
+#	Author URI: https://sajbersove.rs/
+#	Version: 1.2
+#	License: GPLv2
+#
+
+# Seperator, samo na novi red
+#
+IFS=$'\n'
+
+# Web Folder Lokacija Slika
+#
+WEB_LOKACIJA=$1
+
+if [[ -z "$1" ]]; then
+    echo 'ERROR - Lokacija nije navedena. Potrebno je: ./sskonverter /putanja/do/foldera';
+    exit
+fi
+
+# Inicijalna veličina
+#
+iv=$(du -hs $WEB_LOKACIJA | awk '{ print $1 }');
+
+# Čistimo bekap slika koje može da generiše mogrify
+#
+function cistac() {
+    find $WEB_LOKACIJA | grep -Po '.*(~)$' | xargs rm
+}
+
+# Čišćenje pre rada
+#
+echo "Priprema za rad.";
+echo "Inicijalno čišćenje bespotrebnih ~ fajlova.";
+cistac 2>/dev/null
+
+# Ekstenzije Slika po folderima
+#
+SVE_EKSTENZIJE=$(find $WEB_LOKACIJA | grep -Po '.*\.(jpg|jpeg|png|gif)')
+PNG_EKSTENZIJE=$(find $WEB_LOKACIJA | grep -Po '.*\.png')
+JPG_EKSTENZIJE=$(find $WEB_LOKACIJA | grep -Po '.*\.(jpg|jpeg)')
+
+echo "Kompresija započeta.";
+
+# Konvertovanje slika
+#
+echo "Konvertujemo PNG u WEBP";
+
+# Konvertujemo PNG u WEBP
+#
+function pngwebp() {
+    for PNG_SLIKE in $PNG_EKSTENZIJE;
+
+    do cwebp -m 6 -q 70 -af -quiet $PNG_SLIKE -o $PNG_SLIKE;
+    done
+}
+
+echo "Konvertujemo JPG/JPEG u WEBP";
+
+# Konvertujemo JPG u WEBP
+#
+function jpgwebp() {
+    for JPG_SLIKE in $JPG_EKSTENZIJE;
+
+    do cwebp -m 6 -q 70 -af -quiet $JPG_SLIKE -o $JPG_SLIKE;
+    done
+}
+
+# Pokrećemo logiku
+#
+pngwebp &
+jpgwebp &
+wait
+
+# Čišćenje posle rada
+#
+cistac 2>/dev/null
+
+# Velicina posle kompresije
+#
+pk=$(du -hs $WEB_LOKACIJA | awk '{ print $1 }');
+
+echo "---"
+echo "Gotovo."
+echo "Veličina pre kompresije: "$iv
+echo "Veličina posle kompresije: "$pk
